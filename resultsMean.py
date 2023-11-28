@@ -8,7 +8,7 @@ def calcular_promedio_en_subcarpetas(ruta):
     # Recorre la estructura de carpetas de manera recursiva
     for directorio_raiz, directorios, archivos in os.walk(ruta):
         for archivo in archivos:
-            if archivo.endswith(".csv") and archivo != "promedios.csv":
+            if archivo.endswith(".csv") and "promedios" not in archivo:
                 ruta_completa = os.path.join(directorio_raiz, archivo)
 
                 # Determina el grupo basándote en la ruta completa

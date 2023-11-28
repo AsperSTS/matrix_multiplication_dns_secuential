@@ -91,7 +91,7 @@ def main():
     }
 
     saving_format = {
-        'Float':'%.3f',
+        'Float':'%f',
         'Int': '%d'
     }
     if sys.argv[1][2:-4].startswith('f'): 
@@ -114,6 +114,7 @@ def main():
     rank = comm.Get_rank()  
     
     if rank == 0:
+        print(f"Cargando matrices de: {sys.argv[1][minus:-4]}x{sys.argv[1][minus:-4]}")
         # Especifica la ruta completa de los archivos .npy en la carpeta "testMatrix"
         matrix1_path = os.path.join("MatrixFiles", sys.argv[1])
         matrix2_path = os.path.join("MatrixFiles", sys.argv[2])
@@ -131,6 +132,9 @@ def main():
     cpu_monitor_thread = threading.Thread(target=monitor_cpu_usage, args=(exit_event,))
     cpu_monitor_thread.start()
 
+    #Imprimimos un mensaje en terminal para hacer saber que estamos ejecutando el algoritmo
+    print("Ejecutando algoritmo dns")
+    
     # Registra el tiempo inicial
     tiempo_inicial = time.time()
 
@@ -144,9 +148,6 @@ def main():
     exit_event.set()
     cpu_monitor_thread.join()
 
-    # Agregamos el valor actual de nuestro procesador y el uso de memoria
-    #cpu_total_usage.append(psutil.cpu_percent())
-    #memory_usage.append(psutil.virtual_memory().used)
     
     # Proceso 0 traza la gráfica con@mpirun -n 8 python3 dnsMpi.py 'm1_8192.npy' 'm2_8192.npy' 20 los datos recopilados
     if rank == 0:
@@ -162,17 +163,19 @@ def main():
         # Calculamos en MB la memoria que se ha utilizado
         mb_memory_usage = [(i/1024/1024) for i in list(memory_usage)]
         initial_mem = (initial_mem/1024/1024)
-
+        # Calculamos la memoria que se utilizo 
         avg_memory = np.mean(mb_memory_usage ,axis=0)
         avg_memory = avg_memory-initial_mem
 
         #Guardamos la matriz resultante de la multiplicacion
         os.makedirs(matrix_result_output_folder, exist_ok=True)  # Crea la carpeta si no existe
-        #output_file = os.path.join(matrix_result_output_folder, create_unique_filename(f'DNS_{sys.argv[1][minus:-4]}_matrix'))
-        output_file = os.path.join(matrix_result_output_folder, f'DNS_{sys.argv[1][minus:-4]}_matrix')
+        output_file = os.path.join(matrix_result_output_folder, create_unique_filename(f'DNS_{sys.argv[1][minus:-4]}_matrix'))
         np.save(output_file, result_matrix)
-        #np.savetxt(output_file+".txt", result_matrix, fmt=saving_format[data_type_matrix], delimiter=' ')
+        np.savetxt(output_file+".txt", result_matrix, fmt=saving_format[data_type_matrix], delimiter=' ')
 
+        # Guardamos los datos de las corridas en un archivo csv 
+
+        # Intentamos abrir el archivo csv si existe
         try:   
             csv_output_file = os.path.join(csv_folder, f'{sys.argv[1][minus:-4]}{data_type_matrix}Table.csv')
             performanceDataFrame = pd.read_csv(csv_output_file)
@@ -181,7 +184,7 @@ def main():
             performanceDataFrame.loc[len(performanceDataFrame)] = [sys.argv[1][minus:-4], avg_cpu, avg_memory, total_time_elapsed]
 
             performanceDataFrame.to_csv(csv_output_file,index=False)
-
+        # Si no existe entonces lo creamos y guardamos el dato de ejecucion
         except FileNotFoundError:
             measurementCsvData = {
                             "MATRIZ": [sys.argv[1][minus:-4]],
