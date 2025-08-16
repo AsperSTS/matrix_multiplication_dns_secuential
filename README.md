@@ -91,8 +91,7 @@ make genAllGraphs
 
 This project demonstrates:
 - Algorithm complexity analysis (O(n³) vs divide-and-conquer approaches)
-- Performance measurement methodologies
-- Statistical analysis of computational results
+- Performance measurement 
 - System-level programming concepts for operating systems coursework
 
 ---
